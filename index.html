@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Garden Elite — Smart Irrigation</title>
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Prompt:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
 
 <style>
@@ -27,7 +27,7 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 
 body {
-  font-family: 'Syne','Noto Sans Thai',sans-serif;
+  font-family: 'Inter', 'Prompt', sans-serif;
   background: var(--bg);
   min-height: 100vh;
   color: var(--text);
@@ -68,7 +68,7 @@ body {
   letter-spacing:3px; color:var(--accent);
 }
 .brand-text p {
-  font-family:'DM Mono',monospace;
+  font-family:'Roboto Mono',monospace;
   font-size:10px; color:var(--muted);
   margin-top:3px; letter-spacing:2px;
 }
@@ -102,7 +102,7 @@ body {
 .conn-badge.connected    .conn-label { color:#15803d; }
 .conn-badge.disconnected .conn-label { color:#b91c1c; }
 .conn-badge.connecting   .conn-label { color:#92400e; }
-.conn-sub { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.5px; }
+.conn-sub { font-family:'Roboto Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.5px; }
 
 /* ─── DASHBOARD STRIP ─── */
 .dashboard {
@@ -121,7 +121,7 @@ body {
 }
 
 .dash-label {
-  font-family:'DM Mono',monospace;
+  font-family:'Roboto Mono',monospace;
   font-size:10px; letter-spacing:2px;
   color:var(--muted); margin-bottom:10px;
 }
@@ -131,7 +131,7 @@ body {
   color:var(--text); letter-spacing:1px;
   font-variant-numeric:tabular-nums;
 }
-.date-text { font-size:13px; color:var(--muted); margin-top:6px; font-family:'Noto Sans Thai',sans-serif; }
+.date-text { font-size:13px; color:var(--muted); margin-top:6px; font-family:'Prompt',sans-serif; }
 
 /* ─── MASTER CONTROL CARD ─── */
 .master-card {
@@ -144,7 +144,7 @@ body {
   grid-column: span 1;
 }
 .master-card .dash-label { color:rgba(255,255,255,.65); }
-.master-card .section-th { font-family:'Noto Sans Thai',sans-serif; font-size:13px; color:rgba(255,255,255,.8); margin-bottom:14px; }
+.master-card .section-th { font-family:'Prompt',sans-serif; font-size:13px; color:rgba(255,255,255,.8); margin-bottom:14px; }
 
 .master-btns { display:flex; gap:10px; }
 
@@ -154,7 +154,7 @@ body {
   border-radius:14px;
   border:none;
   cursor:pointer;
-  font-family:'Syne',sans-serif;
+  font-family:'Inter',sans-serif;
   font-size:13px; font-weight:700;
   letter-spacing:.5px;
   transition:.2s;
@@ -164,12 +164,12 @@ body {
 .m-btn-open:hover { background:rgba(255,255,255,.35); }
 .m-btn-close { background:white; color:var(--accent); }
 .m-btn-close:hover { background:#f0fdf4; }
-.m-btn span  { font-family:'Noto Sans Thai',sans-serif; font-size:10px; font-weight:400; opacity:.8; }
+.m-btn span  { font-family:'Prompt',sans-serif; font-size:10px; font-weight:400; opacity:.8; }
 
 /* stat card */
 .stat-card { display:flex; flex-direction:column; justify-content:space-between; }
 .stat-num { font-size:46px; font-weight:800; color:var(--accent); line-height:1; }
-.stat-unit { font-size:13px; color:var(--muted); margin-top:4px; font-family:'Noto Sans Thai',sans-serif; }
+.stat-unit { font-size:13px; color:var(--muted); margin-top:4px; font-family:'Prompt',sans-serif; }
 
 /* ─── SECTION HEADER ─── */
 .section-header {
@@ -177,7 +177,7 @@ body {
   margin-bottom:20px;
 }
 .section-en { font-size:18px; font-weight:800; letter-spacing:2px; color:var(--accent); }
-.section-th { font-family:'Noto Sans Thai',sans-serif; font-size:14px; color:var(--muted); }
+.section-th { font-family:'Prompt',sans-serif; font-size:14px; color:var(--muted); }
 
 /* ─── ZONE GRID ─── */
 .zone-grid {
@@ -213,15 +213,15 @@ body {
 }
 
 .zone-label {
-  font-family:'DM Mono',monospace;
+  font-family:'Roboto Mono',monospace;
   font-size:10px; letter-spacing:2px; color:var(--muted);
 }
 .zone-name-en { font-size:20px; font-weight:800; margin-top:3px; }
-.zone-name-th { font-family:'Noto Sans Thai',sans-serif; font-size:12px; color:var(--muted); margin-top:2px; }
+.zone-name-th { font-family:'Prompt',sans-serif; font-size:12px; color:var(--muted); margin-top:2px; }
 
 .valve-status {
   display:flex; align-items:center; gap:6px;
-  font-family:'DM Mono',monospace;
+  font-family:'Roboto Mono',monospace;
   font-size:11px; letter-spacing:1px;
   padding:6px 12px;
   border-radius:50px;
@@ -244,11 +244,11 @@ body {
 }
 .input-group label {
   display:block;
-  font-family:'DM Mono',monospace;
+  font-family:'Roboto Mono',monospace;
   font-size:10px; letter-spacing:1.5px;
   color:var(--accent); margin-bottom:6px;
 }
-.input-group .label-th { font-family:'Noto Sans Thai',sans-serif; font-size:9px; color:var(--muted); display:block; margin-bottom:6px; letter-spacing:0; }
+.input-group .label-th { font-family:'Prompt',sans-serif; font-size:9px; color:var(--muted); display:block; margin-bottom:6px; letter-spacing:0; }
 input[type="time"] {
   width:100%;
   background:white;
@@ -256,7 +256,7 @@ input[type="time"] {
   border-radius:10px;
   padding:11px 12px;
   outline:none;
-  font-family:'DM Mono',monospace;
+  font-family:'Roboto Mono',monospace;
   font-size:14px; color:var(--text);
   transition:.2s;
 }
@@ -269,13 +269,13 @@ button {
   flex:1; border:none; cursor:pointer;
   border-radius:13px;
   padding:13px 10px;
-  font-family:'Syne',sans-serif;
+  font-family:'Inter',sans-serif;
   font-size:13px; font-weight:700;
   transition:.2s;
   display:flex; flex-direction:column; align-items:center; gap:3px;
 }
 button .btn-th {
-  font-family:'Noto Sans Thai',sans-serif;
+  font-family:'Prompt',sans-serif;
   font-size:10px; font-weight:400;
 }
 
@@ -298,16 +298,16 @@ button .btn-th {
   margin-top:14px;
 }
 .schedule small {
-  font-family:'DM Mono',monospace;
+  font-family:'Roboto Mono',monospace;
   font-size:10px; letter-spacing:1px; color:var(--muted);
 }
-.schedule strong { font-family:'DM Mono',monospace; font-size:12px; color:var(--accent); }
+.schedule strong { font-family:'Roboto Mono',monospace; font-size:12px; color:var(--accent); }
 
 /* ─── FOOTER ─── */
 footer {
   text-align:center;
   margin-top:48px;
-  font-family:'DM Mono',monospace;
+  font-family:'Roboto Mono',monospace;
   font-size:11px; letter-spacing:2px; color:var(--muted);
 }
 
@@ -328,7 +328,6 @@ footer {
 <body>
 <div class="wrap">
 
-  <!-- TOPBAR -->
   <div class="topbar">
     <div class="brand">
       <div class="logo">🌿</div>
@@ -347,20 +346,17 @@ footer {
     </div>
   </div>
 
-  <!-- DASHBOARD -->
   <div class="dashboard">
 
-    <!-- Clock -->
     <div class="dash-card">
       <div class="dash-label">SYSTEM TIME · เวลาระบบ</div>
       <div class="clock" id="current-time">00:00:00</div>
       <div class="date-text" id="current-date">—</div>
     </div>
 
-    <!-- Master Control -->
     <div class="dash-card master-card">
       <div class="dash-label">MASTER CONTROL · ควบคุมทั้งหมด</div>
-      <p class="section-th" style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:14px;font-family:'DM Mono',monospace;letter-spacing:1px;">เปิด / ปิด วาล์วทั้ง 6 โซนพร้อมกัน</p>
+      <p class="section-th" style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:14px;font-family:'Roboto Mono',monospace;letter-spacing:1px;">เปิด / ปิด วาล์วทั้ง 6 โซนพร้อมกัน</p>
       <div class="master-btns">
         <button class="m-btn m-btn-open" onclick="masterControl(1)">
           OPEN ALL
@@ -373,7 +369,6 @@ footer {
       </div>
     </div>
 
-    <!-- Stat -->
     <div class="dash-card stat-card">
       <div class="dash-label">ACTIVE ZONES · จำนวนโซน</div>
       <div>
@@ -384,7 +379,6 @@ footer {
 
   </div>
 
-  <!-- ZONES -->
   <div class="section-header">
     <span class="section-en">VALVE ZONES</span>
     <span class="section-th">โซนวาล์วน้ำ</span>
