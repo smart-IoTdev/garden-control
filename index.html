@@ -337,11 +337,20 @@ footer {
       </div>
     </div>
 
-    <div class="conn-badge connecting" id="conn-badge">
-      <div class="dot"></div>
-      <div>
-        <div class="conn-label" id="conn-label">CONNECTING</div>
-        <div class="conn-sub" id="conn-sub">กำลังเชื่อมต่อ...</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <div class="conn-badge connecting" id="conn-badge">
+        <div class="dot"></div>
+        <div>
+          <div class="conn-label" id="conn-label">MQTT</div>
+          <div class="conn-sub" id="conn-sub">กำลังเชื่อมต่อ...</div>
+        </div>
+      </div>
+      <div class="conn-badge disconnected" id="esp-badge">
+        <div class="dot"></div>
+        <div>
+          <div class="conn-label">ESP32</div>
+          <div class="conn-sub" id="esp-sub">รอสัญญาณ...</div>
+        </div>
       </div>
     </div>
   </div>
@@ -556,10 +565,25 @@ function setConnUI(status){
   }
 }
 
+/* ── ESP32 STATUS ── */
+let espLastSeen = null;
+function updateEspBadge(online){
+  const badge = document.getElementById("esp-badge");
+  const sub   = document.getElementById("esp-sub");
+  badge.className = "conn-badge " + (online ? "connected" : "disconnected");
+  sub.innerText   = online
+    ? "WiFi เชื่อมอยู่ · " + new Date().toLocaleTimeString('th-TH',{hour12:false})
+    : "ไม่มีสัญญาณ · อาจ WiFi หลุด";
+}
+setInterval(()=>{ if(espLastSeen && Date.now()-espLastSeen>120000) updateEspBadge(false); },15000);
+
 function connect(){
   setConnUI("connecting");
   client.connect({
-    onSuccess: () => { setConnUI("connected"); },
+    onSuccess: () => {
+      setConnUI("connected");
+      client.subscribe("kxnG13/garden/status");
+    },
     onFailure: () => {
       setConnUI("disconnected");
       setTimeout(connect, 5000);
@@ -571,6 +595,11 @@ function connect(){
 client.onConnectionLost = () => {
   setConnUI("disconnected");
   setTimeout(connect, 5000);
+};
+
+client.onMessageArrived = (msg) => {
+  espLastSeen = Date.now();
+  updateEspBadge(true);
 };
 
 function publish(zone, state){
