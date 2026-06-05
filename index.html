@@ -533,7 +533,10 @@ function masterControl(state){
 function groupControl(group, state){
   const start = group === 1 ? 1 : 4;
   const end   = group === 1 ? 3 : 6;
-  for(let i = start; i <= end; i++) toggleValve(i, state);
+  for(let i = start; i <= end; i++){
+    const delay = (i - start) * 5000; // หน่วง 5 วินาทีต่อโซน
+    setTimeout(() => toggleValve(i, state), delay);
+  }
 }
 
 /* ── TOGGLE VALVE ── */
