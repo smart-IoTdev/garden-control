@@ -337,11 +337,20 @@ footer {
       </div>
     </div>
 
-    <div class="conn-badge connecting" id="conn-badge">
-      <div class="dot"></div>
-      <div>
-        <div class="conn-label" id="conn-label">CONNECTING</div>
-        <div class="conn-sub" id="conn-sub">กำลังเชื่อมต่อ...</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <div class="conn-badge connecting" id="conn-badge">
+        <div class="dot"></div>
+        <div>
+          <div class="conn-label" id="conn-label">MQTT</div>
+          <div class="conn-sub" id="conn-sub">กำลังเชื่อมต่อ...</div>
+        </div>
+      </div>
+      <div class="conn-badge disconnected" id="esp-badge">
+        <div class="dot"></div>
+        <div>
+          <div class="conn-label" id="esp-label">ESP32</div>
+          <div class="conn-sub" id="esp-sub">รอสัญญาณ...</div>
+        </div>
       </div>
     </div>
   </div>
@@ -514,6 +523,10 @@ function setValveUI(zone, state){
 
 /* ── MASTER CONTROL ── */
 function masterControl(state){
+  if(!client.isConnected()){
+    alert("⚠ ยังไม่ได้เชื่อมต่อ MQTT\nกรุณารอให้แสดงสถานะ CONNECTED ก่อนครับ");
+    return;
+  }
   for(let i = 1; i <= 6; i++) toggleValve(i, state);
 }
 
@@ -529,19 +542,41 @@ const client = new Paho.MQTT.Client(
   "web_elite_" + Math.random().toString(16).substr(2,6)
 );
 
+/* ── ESP32 STATUS ── */
+let espLastSeen = null;
+
+function updateEspBadge(online){
+  const badge = document.getElementById("esp-badge");
+  const label = document.getElementById("esp-label");
+  const sub   = document.getElementById("esp-sub");
+  if(online){
+    badge.className = "conn-badge connected";
+    label.innerText = "ESP32";
+    sub.innerText   = "WiFi เชื่อมอยู่ · " + new Date().toLocaleTimeString('th-TH',{hour12:false});
+  } else {
+    badge.className = "conn-badge disconnected";
+    label.innerText = "ESP32";
+    sub.innerText   = "ไม่มีสัญญาณ · อาจ WiFi หลุด";
+  }
+}
+
+setInterval(() => {
+  if(espLastSeen && Date.now() - espLastSeen > 120000) updateEspBadge(false);
+}, 15000);
+
 function setConnUI(status){
   const badge = document.getElementById("conn-badge");
   const label = document.getElementById("conn-label");
   const sub   = document.getElementById("conn-sub");
   badge.className = "conn-badge " + status;
   if(status === "connected"){
-    label.innerText = "CONNECTED";
+    label.innerText = "MQTT";
     sub.innerText   = "เชื่อมต่อแล้ว · broker.hivemq.com";
   } else if(status === "disconnected"){
-    label.innerText = "DISCONNECTED";
+    label.innerText = "MQTT";
     sub.innerText   = "ไม่ได้เชื่อมต่อ · กำลังลองใหม่...";
   } else {
-    label.innerText = "CONNECTING";
+    label.innerText = "MQTT";
     sub.innerText   = "กำลังเชื่อมต่อ...";
   }
 }
@@ -549,7 +584,10 @@ function setConnUI(status){
 function connect(){
   setConnUI("connecting");
   client.connect({
-    onSuccess: () => { setConnUI("connected"); },
+    onSuccess: () => {
+      setConnUI("connected");
+      client.subscribe("kxnG13/garden/status");
+    },
     onFailure: () => {
       setConnUI("disconnected");
       setTimeout(connect, 5000);
@@ -561,6 +599,13 @@ function connect(){
 client.onConnectionLost = () => {
   setConnUI("disconnected");
   setTimeout(connect, 5000);
+};
+
+client.onMessageArrived = (msg) => {
+  const payload = msg.payloadString;
+  // ทุกข้อความจาก ESP32 = มันยัง online อยู่
+  espLastSeen = Date.now();
+  updateEspBadge(true);
 };
 
 function publish(zone, state){
