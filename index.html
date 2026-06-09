@@ -303,6 +303,42 @@ button .btn-th {
 }
 .schedule strong { font-family:'Roboto Mono',monospace; font-size:12px; color:var(--accent); }
 
+/* ─── SAVED BADGE ─── */
+.saved-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  background:#dcfce7; color:#15803d;
+  border:1px solid #bbf7d0;
+  border-radius:50px;
+  padding:3px 9px;
+  font-family:'Roboto Mono',monospace;
+  font-size:10px; letter-spacing:1px;
+  margin-left:8px;
+  opacity:0; transition:opacity .4s;
+}
+.saved-badge.show { opacity:1; }
+
+/* ─── RESET ZONE BUTTON ─── */
+.btn-reset-zone {
+  width:100%; margin-top:10px;
+  padding:10px 12px;
+  background:rgba(245,158,11,.1);
+  color:#92400e;
+  border:1.5px solid rgba(245,158,11,.3);
+  border-radius:12px;
+  font-size:11px; font-weight:700; letter-spacing:.5px;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  font-family:'Inter',sans-serif;
+  transition:.2s;
+}
+.btn-reset-zone:hover {
+  background:rgba(245,158,11,.22);
+  border-color:rgba(245,158,11,.5);
+}
+.btn-reset-zone .btn-th {
+  font-family:'Prompt',sans-serif; font-size:10px; font-weight:400; opacity:.8;
+}
+
 /* ─── FOOTER ─── */
 footer {
   text-align:center;
@@ -380,6 +416,11 @@ footer {
           <span>ปิดทั้งหมด</span>
         </button>
       </div>
+      <div style="margin-top:12px;">
+        <button onclick="resetAllSchedules()" style="width:100%;background:rgba(239,68,68,.18);color:#fca5a5;border:1.5px solid rgba(239,68,68,.3);border-radius:14px;padding:11px 14px;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Inter',sans-serif;transition:.2s;" onmouseover="this.style.background='rgba(239,68,68,.3)'" onmouseout="this.style.background='rgba(239,68,68,.18)'">
+          🔄 RESET SCHEDULE &nbsp;<span style="font-family:'Prompt',sans-serif;font-size:10px;font-weight:400;opacity:.75;">รีเซตตารางเวลาทั้งหมด · ใช้ค่า firmware</span>
+        </button>
+      </div>
     </div>
 
     <div class="dash-card stat-card">
@@ -404,9 +445,11 @@ footer {
 
 <script>
 /* ── CONFIG ── */
-const MQTT_HOST  = "broker.hivemq.com";
-const MQTT_PORT  = 8884;
-const BASE_TOPIC = "kxnG13/garden/zone/";
+const MQTT_HOST      = "broker.hivemq.com";
+const MQTT_PORT      = 8884;
+const BASE_TOPIC     = "kxnG13/garden/zone/";
+const SCHEDULE_TOPIC = "kxnG13/garden/schedule";
+const LS_KEY         = "garden_schedules_v1";
 
 const zones = [
   { en:"ZONE 1", th:"โซนที่ 1" },
@@ -417,13 +460,30 @@ const zones = [
   { en:"ZONE 6", th:"โซนที่ 6" },
 ];
 
+/* schedules[id] = { on:"HH:MM"|null, off:"HH:MM"|null } */
 let schedules = {};
+
+/* ── LOCAL STORAGE HELPERS ── */
+function saveToStorage(){
+  localStorage.setItem(LS_KEY, JSON.stringify(schedules));
+}
+
+function loadFromStorage(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) return JSON.parse(raw);
+  } catch(e){}
+  return null;
+}
 
 /* ── BUILD UI ── */
 function initUI(){
+  const saved = loadFromStorage();
   let html = "";
   zones.forEach((z, i) => {
-    const id = i + 1;
+    const id  = i + 1;
+    const s   = saved ? (saved[id] || {on:null,off:null}) : {on:null,off:null};
+    schedules[id] = s;
     html += `
     <div class="card" id="card-${id}">
       <div class="zone-top">
@@ -442,12 +502,12 @@ function initUI(){
         <div class="input-group">
           <label>START TIME</label>
           <span class="label-th">เวลาเปิด</span>
-          <input type="time" id="on-${id}" onchange="updateSchedule(${id})">
+          <input type="time" id="on-${id}" value="${s.on||''}" onchange="updateSchedule(${id})">
         </div>
         <div class="input-group">
           <label>END TIME</label>
           <span class="label-th">เวลาปิด</span>
-          <input type="time" id="off-${id}" onchange="updateSchedule(${id})">
+          <input type="time" id="off-${id}" value="${s.off||''}" onchange="updateSchedule(${id})">
         </div>
       </div>
 
@@ -462,12 +522,27 @@ function initUI(){
 
       <div class="schedule">
         <small>AUTO SCHEDULE · กำหนดเวลา</small>
-        <strong id="tag-${id}">NOT SET</strong>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <strong id="tag-${id}">${(s.on||s.off) ? (s.on||'--')+' → '+(s.off||'--') : 'NOT SET'}</strong>
+          <span class="saved-badge ${(s.on||s.off)?'show':''}" id="saved-badge-${id}">✓ SAVED</span>
+        </div>
       </div>
+
+      <button class="btn-reset-zone" onclick="resetZoneSchedule(${id})">
+        🔄 RESET ZONE ${id} <span class="btn-th">รีเซตเวลาโซนนี้ · ใช้ค่า firmware</span>
+      </button>
     </div>`;
-    schedules[id] = { on:null, off:null };
   });
   document.getElementById("zone-display").innerHTML = html;
+
+  // อัปเดตสีป้ายกำหนดเวลาให้ตรงกับค่าที่โหลดมา
+  for(let id = 1; id <= 6; id++){
+    const s = schedules[id];
+    const tag = document.getElementById(`tag-${id}`);
+    if(s && (s.on || s.off)){
+      tag.style.color = "#3d7a56";
+    }
+  }
 }
 
 /* ── CLOCK ── */
@@ -480,26 +555,129 @@ function updateDateTime(){
   checkAuto(now.getHours(), now.getMinutes());
 }
 
-/* ── SCHEDULE ── */
+/* ── UPDATE SCHEDULE (เมื่อผู้ใช้แก้ไข) ── */
 function updateSchedule(id){
   const onVal  = document.getElementById(`on-${id}`).value;
   const offVal = document.getElementById(`off-${id}`).value;
   schedules[id] = { on:onVal||null, off:offVal||null };
+
+  // บันทึกลง localStorage
+  saveToStorage();
+
+  // ส่งให้ ESP32 ผ่าน MQTT → ESP32 บันทึกลง Flash เอง
+  publishSchedule(id);
+
+  // อัปเดต UI
   const tag = document.getElementById(`tag-${id}`);
+  const badge = document.getElementById(`saved-badge-${id}`);
   if(onVal || offVal){
     tag.innerText = `${onVal||'--'} → ${offVal||'--'}`;
     tag.style.color = "#3d7a56";
+    badge.classList.add("show");
   } else {
     tag.innerText = "NOT SET";
     tag.style.color = "#7a9680";
+    badge.classList.remove("show");
   }
 }
 
+/* ── ส่ง SCHEDULE ให้ ESP32 ── */
+function publishSchedule(id){
+  if(!client.isConnected()) return;
+  const s = schedules[id];
+  let payload;
+  if(s.on && s.off){
+    // format: "zoneNum,HH:MM,HH:MM"
+    payload = `${id},${s.on},${s.off}`;
+  } else {
+    // ล้างค่า → ESP32 ใช้ค่าเริ่มต้นใน firmware
+    payload = `${id},CLEAR`;
+  }
+  const msg = new Paho.MQTT.Message(payload);
+  msg.destinationName = SCHEDULE_TOPIC;
+  client.send(msg);
+  console.log("[SCHEDULE] ส่ง:", payload);
+}
+
+/* ── ส่ง SCHEDULE ทุกโซนใหม่หลังเชื่อม MQTT ── */
+function resyncAllSchedules(){
+  // หน่วงเล็กน้อยให้ broker พร้อม
+  setTimeout(() => {
+    for(let id = 1; id <= 6; id++) publishSchedule(id);
+    console.log("[SCHEDULE] Resync ทั้งหมดสำเร็จ");
+  }, 800);
+}
+
+/* ── RESET SCHEDULE ของโซนเดียว ── */
+function resetZoneSchedule(id){
+  if(!confirm(`รีเซตตารางเวลาโซน ${id}?\nESP32 จะกลับไปใช้เวลาที่ตั้งไว้ใน firmware`)) return;
+
+  schedules[id] = { on:null, off:null };
+  document.getElementById(`on-${id}`).value  = '';
+  document.getElementById(`off-${id}`).value = '';
+
+  const tag   = document.getElementById(`tag-${id}`);
+  const badge = document.getElementById(`saved-badge-${id}`);
+  tag.innerText = "NOT SET";
+  tag.style.color = "#7a9680";
+  badge.classList.remove("show");
+
+  saveToStorage();
+  publishSchedule(id); // ส่ง CLEAR ให้ ESP32
+
+  showToast(`รีเซตโซน ${id} แล้ว · ESP32 ใช้ค่าเริ่มต้น firmware`);
+}
+
+/* ── RESET SCHEDULE (ปุ่ม RESET ทั้งหมด) ── */
+function resetAllSchedules(){
+  if(!confirm("รีเซตตารางเวลาทั้งหมด?\nESP32 จะกลับไปใช้เวลาที่ตั้งไว้ใน firmware (05:00 / 05:30)")) return;
+
+  // เคลียร์ตัวแปรและ localStorage
+  for(let id = 1; id <= 6; id++){
+    schedules[id] = { on:null, off:null };
+    document.getElementById(`on-${id}`).value  = '';
+    document.getElementById(`off-${id}`).value = '';
+    const tag   = document.getElementById(`tag-${id}`);
+    const badge = document.getElementById(`saved-badge-${id}`);
+    tag.innerText = "NOT SET";
+    tag.style.color = "#7a9680";
+    badge.classList.remove("show");
+  }
+  localStorage.removeItem(LS_KEY);
+
+  // ส่ง CLEAR ให้ ESP32 ทุกโซน
+  for(let id = 1; id <= 6; id++) publishSchedule(id);
+
+  showToast("รีเซตตารางเวลาทั้งหมดแล้ว · ESP32 ใช้ค่าเริ่มต้น firmware");
+}
+
+/* ── TOAST NOTIFICATION ── */
+function showToast(msg){
+  let t = document.getElementById("toast");
+  if(!t){
+    t = document.createElement("div");
+    t.id = "toast";
+    t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+      background:#1a2e1f;color:white;padding:13px 24px;border-radius:50px;
+      font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.5px;
+      box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9999;opacity:0;transition:.3s;pointer-events:none;`;
+    document.body.appendChild(t);
+  }
+  t.innerText = msg;
+  t.style.opacity = "1";
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = "0"; }, 3000);
+}
+
+/* ── AUTO CHECK (หน้าเว็บยังเปิดอยู่) ── */
+let _lastAutoMin = "";
 function checkAuto(h, m){
-  const now = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const nowMin = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  if(nowMin === _lastAutoMin) return; // ทำซ้ำแค่นาทีละครั้ง
+  _lastAutoMin = nowMin;
   for(let id in schedules){
-    if(schedules[id].on  === now) toggleValve(id, 1);
-    if(schedules[id].off === now) toggleValve(id, 0);
+    if(schedules[id].on  === nowMin) toggleValve(id, 1);
+    if(schedules[id].off === nowMin) toggleValve(id, 0);
   }
 }
 
@@ -534,7 +712,7 @@ function groupControl(group, state){
   const start = group === 1 ? 1 : 4;
   const end   = group === 1 ? 3 : 6;
   for(let i = start; i <= end; i++){
-    const delay = (i - start) * 5000; // หน่วง 5 วินาทีต่อโซน
+    const delay = (i - start) * 5000;
     setTimeout(() => toggleValve(i, state), delay);
   }
 }
@@ -586,6 +764,8 @@ function connect(){
     onSuccess: () => {
       setConnUI("connected");
       client.subscribe("kxnG13/garden/status");
+      // เชื่อม MQTT แล้ว → sync schedule ไปให้ ESP32 ใหม่ทันที
+      resyncAllSchedules();
     },
     onFailure: () => {
       setConnUI("disconnected");
